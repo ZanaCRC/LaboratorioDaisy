@@ -13,36 +13,15 @@
           </tr>
         </thead>
         <tbody>
-          <!-- row 1 -->
-          <tr>
-            <th>1</th>
-            <td>Proyecto A</td>
-            <td>5 tareas pendientes</td>
+          <tr v-for="project in projectStore.getAllProjects" :key="project.id">
+            <th>{{ project.id }}</th>
+            <td>{{ project.name }}</td>
+            <td>{{ project.tasks.length }} tareas pendientes</td>
             <td>
               <div class="flex items-center gap-2">
-                <div class="radial-progress" style="--value:70;">70%</div>
-              </div>
-            </td>
-          </tr>
-          <!-- row 2 -->
-          <tr>
-            <th>2</th>
-            <td>Proyecto B</td>
-            <td>3 tareas pendientes</td>
-            <td>
-              <div class="flex items-center gap-2">
-                <div class="radial-progress" style="--value:45;">45%</div>
-              </div>
-            </td>
-          </tr>
-          <!-- row 3 -->
-          <tr>
-            <th>3</th>
-            <td>Proyecto C</td>
-            <td>8 tareas pendientes</td>
-            <td>
-              <div class="flex items-center gap-2">
-                <div class="radial-progress" style="--value:25;">25%</div>
+                <div class="radial-progress" :style="`--value:${getProjectProgress(project)};`">
+                  {{ getProjectProgress(project) }}%
+                </div>
               </div>
             </td>
           </tr>
@@ -60,7 +39,7 @@
       <h3 class="text-lg font-bold">Nuevo Proyecto</h3>
       <p class="py-4">Aquí puedes crear un nuevo proyecto. Presiona ESC o haz clic en el botón para cerrar</p>
       
-      <!-- Formulario básico -->
+      <!-- Formulario -->
       <div class="form-control w-full max-w-xs">
         <label class="label">
           <span class="label-text">Nombre del proyecto</span>
@@ -69,9 +48,11 @@
           type="text" 
           placeholder="Escribe aquí" 
           class="input input-bordered w-full max-w-xs"
-          
+          v-model="projectName"
+          @input="(e: Event) => console.log('Input cambiado:', (e.target as HTMLInputElement).value)"
         />
       </div>
+      <!-- Modal Actions -->
       <template #actions>
         <button class="btn btn-primary mr-2" @click="handleSave">Guardar</button>
         <button class="btn" @click="handleClose">Cerrar</button>
@@ -81,21 +62,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 // Importar los componentes necesarios
 import FloatingButton from '../components/common/FloatingButton.vue'
 import PlusCircleIcon from '../components/icons/PlusCircleIcon.vue'
-import ProjectModal from '../components/common/ProjectModal.vue'
+import ProjectModal from '../components/common/Modal.vue'
+import { useProjectStore } from '../stores/projects'
 
 // Estado local
 const projectName = ref('')
 // Estado del modal
 const isModalOpen = ref(false)
+// Inicializar el store
+const projectStore = useProjectStore()
+
+// Función para calcular el progreso del proyecto
+const getProjectProgress = (project: any) => {
+  if (!project.tasks.length) return 0
+  const completedTasks = project.tasks.filter((task: any) => task.completed).length
+  return Math.round((completedTasks / project.tasks.length) * 100)
+}
 
 // Función para abrir el modal
 const openModal = () => {
   console.log('Abriendo modal')
   isModalOpen.value = true
+
 }
 
 // Función para cerrar el modal
@@ -110,13 +102,18 @@ const handleClose = () => {
 }
 // Función para guardar
 const handleSave = () => {
-  console.log('Guardando proyecto:', projectName.value)
-  // Aquí puedes agregar lógica para guardar
-  projectName.value = ''
-  emit('close')
+  console.log('Guardando proyecto')
+  console.log('Valor actual de projectName:', projectName.value)
+  if (projectName.value.trim()) {
+    console.log('Proyecto a guardar:', projectName.value)
+    projectStore.addProject(projectName.value)
+    console.log('Proyectos en el store:', projectStore.getAllProjects)
+    projectName.value = ''
+    closeModal()
+  } else {
+    console.log('El nombre del proyecto está vacío')
+  }
 }
-// Aquí puedes agregar la lógica del componente
-// Por ejemplo, puedes cargar los datos de proyectos desde una API
 </script>
 
 <style scoped>

@@ -12,15 +12,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+
 
 // Props
 const props = defineProps<{
   isOpen: boolean
 }>()
-
-
-
 
 
 
